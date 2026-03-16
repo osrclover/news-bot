@@ -70,3 +70,44 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+import requests # 텔레그램 전송을 위해 이 도구가 필요해요!
+
+# ... (기존 설정 코드들) ...
+telegram_token = os.getenv("TELEGRAM_TOKEN")
+telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
+
+def send_telegram_message(message):
+    """텔레그램으로 메시지를 보내는 함수"""
+    url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
+    
+    # 메시지가 너무 길면 텔레그램이 힘들어해서 나눠서 보내야 해요
+    if len(message) > 4000:
+        message = message[:4000] + "\n...(너무 길어서 생략)..."
+        
+    data = {
+        "chat_id": telegram_chat_id,
+        "text": message,
+        "parse_mode": "Markdown" # 글씨를 예쁘게 꾸며줘요
+    }
+    requests.post(url, data=data)
+
+def main():
+    # ... (뉴스 수집 및 AI 분석 코드들) ...
+    
+    # 텔레그램에 보낼 내용 만들기
+    telegram_text = f"🚀 *오늘의 AI 선정 뉴스 ({datetime.now().strftime('%Y-%m-%d')})*\n\n"
+    
+    for category, url in NEWS_SOURCES.items():
+        # ... (중략: 뉴스 가져오는 부분) ...
+        telegram_text += f"📌 *{category} Top 20*\n"
+        for i, news in enumerate(top_news):
+            telegram_text += f"{i+1}. [{news['title']}]({news['link']})\n"
+        telegram_text += "\n"
+
+    # 1. 파일로 저장하기
+    with open("README.md", "w", encoding="utf-8") as f:
+        f.write(telegram_text)
+        
+    # 2. 텔레그램으로 전송하기! (이 줄을 추가!)
+    send_telegram_message(telegram_text)

@@ -14,6 +14,20 @@ NEWS_SOURCES = {
     "코인 뉴스": "https://news.google.com/rss/search?q=비트코인+암호화폐+코인&hl=ko&gl=KR&ceid=KR:ko"
 }
 
+def send_message(text):
+
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+
+    payload = {
+        "chat_id": CHAT_ID,
+        "text": text[:4000],
+        "disable_web_page_preview": True
+    }
+
+    r = requests.post(url, json=payload)
+
+    print(r.text)
+    
 def fetch_news(url):
     """RSS를 통해 뉴스 수집"""
     feed = feedparser.parse(url)

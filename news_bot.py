@@ -54,32 +54,55 @@ def filter_news_with_gemini(category, news_list):
         return news_list[:20]
 
 
+def split_message(message, max_length=4000):
+    """긴 메시지를 줄 단위로 나눠서 여러 조각으로 분할"""
+    lines = message.split("\n")
+    chunks = []
+    current_chunk = ""
+
+    for line in lines:
+        # 현재 조각에 이 줄을 추가해도 제한 이내인지 확인
+        if len(current_chunk) + len(line) + 1 <= max_length:
+            current_chunk += line + "\n"
+        else:
+            # 현재 조각 저장하고 새 조각 시작
+            if current_chunk:
+                chunks.append(current_chunk.rstrip("\n"))
+            current_chunk = line + "\n"
+
+    # 마지막 조각 저장
+    if current_chunk:
+        chunks.append(current_chunk.rstrip("\n"))
+
+    return chunks
+
+
 def send_telegram_message(message):
-    """텔레그램으로 메시지를 보내는 함수"""
+    """텔레그램으로 메시지를 보내는 함수 (긴 메시지는 자동 분할 전송)"""
     if not telegram_token or not telegram_chat_id:
         print("⚠️ TELEGRAM_TOKEN 또는 TELEGRAM_CHAT_ID가 설정되지 않았습니다.")
         return
 
     url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
+    chunks = split_message(message)
 
-    # 텔레그램 메시지 길이 제한 (4096자)
-    if len(message) > 4000:
-        message = message[:4000] + "\n...(너무 길어서 생략)..."
+    print(f"📨 총 {len(chunks)}개 메시지로 나눠서 전송합니다...")
 
-    data = {
-        "chat_id": telegram_chat_id,
-        "text": message,
-        "parse_mode": "Markdown"
-    }
+    for i, chunk in enumerate(chunks, 1):
+        data = {
+            "chat_id": telegram_chat_id,
+            "text": chunk,
+            "parse_mode": "Markdown"
+        }
 
-    try:
-        response = requests.post(url, data=data)
-        if response.status_code == 200:
-            print("✅ 텔레그램 전송 성공!")
-        else:
-            print(f"❌ 텔레그램 전송 실패: {response.status_code} - {response.text}")
-    except Exception as e:
-        print(f"❌ 텔레그램 전송 에러: {e}")
+        try:
+            response = requests.post(url, data=data)
+            if response.status_code == 200:
+                print(f"✅ [{i}/{len(chunks)}] 텔레그램 전송 성공!")
+            else:
+                print(f"❌ [{i}/{len(chunks)}] 텔레그램 전송 실패: {response.status_code} - {response.text}")
+        except Exception as e:
+            print(f"❌ [{i}/{len(chunks)}] 텔레그램 전송 에러: {e}")
 
 
 def main():

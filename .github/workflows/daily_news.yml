@@ -11,6 +11,8 @@ jobs:
     # 💡 로봇에게 Node.js 24를 쓰라고 미리 알려주는 마법의 주문이에요
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true 
+      steps:
+      - uses: actions/checkout@v4
 
     steps:
       # 최신 버전(@v5, @v6 등)으로 도구들을 업데이트했어요!
